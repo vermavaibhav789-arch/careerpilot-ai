@@ -1,0 +1,86 @@
+[
+  {
+    "skill": "RAG",
+    "question": "How would you reduce hallucinations in a RAG system?",
+    "ideal_answer": "Improve retrieval precision (better chunking, hybrid search, reranking) so the model gets relevant context. Ground responses by instructing the model to only answer from retrieved context and to say when it can't find an answer. Add citations so claims can be traced back to source chunks. Use a smaller, well-scoped context window rather than dumping everything in. Evaluate with a held-out QA set and track faithfulness metrics, not just relevance.",
+    "key_concepts": "chunking strategy, hybrid search, reranking, grounding/citation, retrieval precision vs recall, faithfulness evaluation"
+  },
+  {
+    "skill": "RAG",
+    "question": "Walk me through how you'd chunk a long technical document for retrieval.",
+    "ideal_answer": "Avoid naive fixed-length splitting that cuts sentences/sections mid-thought. Prefer semantic or structure-aware chunking (by heading, paragraph) with modest overlap (e.g. 10-20%) to preserve context across boundaries. Chunk size is a tradeoff: smaller chunks improve retrieval precision but lose surrounding context; larger chunks give more context but dilute relevance. Consider adding metadata (section title, doc source) to each chunk to aid filtering and reranking.",
+    "key_concepts": "semantic chunking, chunk overlap, chunk size tradeoff, metadata enrichment, structure-aware splitting"
+  },
+  {
+    "skill": "RAG",
+    "question": "When would you NOT use RAG, and use fine-tuning or a longer context window instead?",
+    "ideal_answer": "RAG is best when knowledge changes often or is too large to fit in context, and you need traceability/citations. Fine-tuning is better for teaching a consistent style, format, or narrow behavior rather than facts. Long-context is viable when the knowledge base is small and static enough to fit in the window, avoiding retrieval complexity entirely, but costs more per call and can suffer from 'lost in the middle' effects.",
+    "key_concepts": "RAG vs fine-tuning vs long context, when knowledge changes frequently, cost/latency tradeoffs, lost-in-the-middle"
+  },
+  {
+    "skill": "LangChain",
+    "question": "What problems does an orchestration framework like LangChain actually solve, and where does it get in the way?",
+    "ideal_answer": "It standardizes common patterns — chaining prompts, tool calling, memory, retrieval — so you're not rewriting boilerplate. It gets in the way when the abstraction hides what's actually being sent to the model, making debugging and prompt iteration harder, or when you need fine-grained control over token usage/latency that the framework doesn't expose cleanly. Many production teams end up writing thinner, custom orchestration once requirements stabilize.",
+    "key_concepts": "abstraction tradeoffs, debuggability, when to go framework-less, boilerplate vs control"
+  },
+  {
+    "skill": "FastAPI",
+    "question": "How do you handle a slow, blocking operation (like a call to an LLM API) inside a FastAPI endpoint without blocking the event loop?",
+    "ideal_answer": "Use an async def endpoint and an async HTTP client (e.g. httpx.AsyncClient or the SDK's async client) so the call awaits without blocking the event loop. If you must call a sync/blocking library, run it in a thread pool via run_in_threadpool or asyncio.to_thread rather than calling it directly in an async function. For long-running work, consider a background task queue instead of holding the request open.",
+    "key_concepts": "async def vs def, event loop blocking, run_in_threadpool, async HTTP clients, background tasks"
+  },
+  {
+    "skill": "FastAPI",
+    "question": "How would you validate and document a structured API response so frontend and backend can't drift out of sync?",
+    "ideal_answer": "Define response models with Pydantic and set them as response_model on the route so FastAPI validates and serializes the output, catching mismatches at development time. This also auto-generates OpenAPI/Swagger docs, which the frontend team can use as a live contract. Version the schema deliberately when breaking changes are needed.",
+    "key_concepts": "Pydantic response_model, OpenAPI/Swagger generation, schema-as-contract, versioning breaking changes"
+  },
+  {
+    "skill": "Vector databases",
+    "question": "How do you decide what embedding model and similarity metric to use for a retrieval system?",
+    "ideal_answer": "Match the embedding model to the domain (general text vs. code vs. domain-specific like legal/medical) and check its benchmark performance on retrieval tasks (e.g. MTEB), not just general quality. Cosine similarity is the standard default; if the model's embeddings are normalized, cosine and dot-product are equivalent and dot-product is cheaper to compute. Also weigh dimensionality (affects storage/latency) and whether the model supports separate query vs document embeddings for asymmetric search.",
+    "key_concepts": "embedding model selection, MTEB benchmark, cosine vs dot-product similarity, normalized embeddings, asymmetric query/document embeddings"
+  },
+  {
+    "skill": "Vector databases",
+    "question": "Your retrieval quality is poor even though the right document exists in the database. How do you debug it?",
+    "ideal_answer": "First check the chunk actually contains the answer and isn't split awkwardly. Inspect the raw similarity scores for the query — low scores suggest an embedding/domain mismatch. Try the query verbatim vs. rephrased to see if it's a query-formulation issue. Consider hybrid search (combining keyword/BM25 with vector search) if the query relies on exact terms embeddings underweight. Add a reranking step. Finally, check metadata filters aren't silently excluding the right chunk.",
+    "key_concepts": "chunk inspection, similarity score debugging, hybrid/BM25 search, reranking, metadata filter bugs"
+  },
+  {
+    "skill": "Python",
+    "question": "Explain the difference between a generator and a list comprehension, and when you'd choose one over the other.",
+    "ideal_answer": "A list comprehension eagerly builds the full list in memory. A generator (via a generator expression or yield) produces items lazily, one at a time, which is far more memory-efficient for large or unbounded sequences and lets you start processing before the whole sequence is computed. Choose a generator when you're streaming/piping data or the sequence is large; choose a list when you need random access, len(), or to iterate multiple times.",
+    "key_concepts": "lazy vs eager evaluation, memory efficiency, single-pass iteration, when random access is needed"
+  },
+  {
+    "skill": "SQL",
+    "question": "How would you find and fix a slow query on a large table?",
+    "ideal_answer": "Run EXPLAIN/EXPLAIN ANALYZE to see the query plan and look for full table scans where an index scan is expected. Check that WHERE/JOIN/ORDER BY columns are indexed, and that the index is actually being used (watch for implicit type casts or functions on indexed columns that prevent index use). Consider composite indexes matching common filter combinations, and whether the query is pulling more columns/rows than needed.",
+    "key_concepts": "EXPLAIN ANALYZE, index scan vs full table scan, composite indexes, sargability, over-fetching"
+  },
+  {
+    "skill": "LLM APIs",
+    "question": "How do you make LLM API calls reliable in production — handling rate limits, timeouts, and malformed responses?",
+    "ideal_answer": "Use exponential backoff with jitter for retryable errors (429/5xx), set sane timeouts, and cap total retries so failures don't cascade. Use structured outputs or strict tool schemas where the API supports them so you're not parsing free-form text. Log prompts/responses (redacting sensitive data) for debugging, and track token usage and latency as first-class metrics. Have a fallback behavior (cached response, simpler model, graceful error) rather than letting the whole request fail.",
+    "key_concepts": "exponential backoff, rate limit handling, structured outputs, observability/logging, graceful degradation"
+  },
+  {
+    "skill": "LLM APIs",
+    "question": "What's the tradeoff between using a bigger model with a simple prompt vs. a smaller model with a carefully engineered prompt?",
+    "ideal_answer": "Bigger models are more forgiving of vague prompts and handle complex reasoning better out of the box, but cost more and are slower. Smaller models can match quality on well-scoped tasks with tighter prompts, examples, and structured outputs, at a fraction of the cost/latency — good for high-volume or latency-sensitive paths. Many production systems route: cheap/fast model for easy cases, escalate to a larger model when confidence is low or the task is complex.",
+    "key_concepts": "cost/latency/quality tradeoff, prompt engineering to close the gap, model routing/escalation"
+  },
+  {
+    "skill": "System design",
+    "question": "How would you design this resume-matching feature to handle 10,000 analyses per day instead of a handful?",
+    "ideal_answer": "Move LLM calls off the request path into an async job/queue so uploads return immediately and results are polled or pushed via websocket. Cache identical resume+JD pairs. Batch embedding/vector operations where possible. Add rate limiting and backpressure so a burst doesn't overwhelm the LLM API's own limits. Monitor cost per request since LLM calls dominate spend at that volume, and consider a cheaper model for the first-pass extraction with a larger model only for edge cases.",
+    "key_concepts": "async job queue, caching, batching, rate limiting/backpressure, cost monitoring, model routing"
+  },
+  {
+    "skill": "Deployment",
+    "question": "What would you check before deploying an LLM-powered feature to production?",
+    "ideal_answer": "Set up evaluation on a representative test set so you can measure quality before and after prompt/model changes, not just spot-check outputs. Add monitoring for latency, error rate, and cost per request. Handle API failures and refusals gracefully in the UI rather than showing raw errors. Set explicit timeouts and max_tokens to bound worst-case latency and cost. Version prompts so you can roll back a regression quickly.",
+    "key_concepts": "offline evaluation set, latency/cost/error monitoring, graceful failure handling, prompt versioning, rollback strategy"
+  }
+]
